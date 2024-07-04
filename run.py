@@ -1,9 +1,28 @@
 from flask import Flask, request, jsonify
 import json
 import logging
+from flasgger import Swagger
+from flasgger.utils import swag_from
+
 
 flask_app = Flask(__name__)
 logging.basicConfig(level=logging.INFO, format='%(asctime)s %(levelname)s: %(message)s [in %(pathname)s:%(lineno)d]')
+
+
+swagger = Swagger(flask_app, config={
+    "headers": [],
+    "specs": [
+        {
+            "endpoint": 'apispec_1',
+            "route": '/apispec_1.json',
+            "rule_filter": lambda rule: True,
+            "model_filter": lambda tag: True,
+        }
+    ],
+    "static_url_path": "/flasgger_static",
+    "swagger_ui": True,
+    "specs_route": "/swagger/"
+})
 
 
 class FileProcessingError(Exception):
@@ -11,12 +30,14 @@ class FileProcessingError(Exception):
 
 
 @flask_app.route('/')
+@swag_from('swagger_config.yml', methods=['GET'])
 def index():
     flask_app.logger.info("Index end point is reached")
     return 'Server is running'
 
 
 @flask_app.route('/post', methods=['POST'])
+@swag_from('swagger_config.yml', methods=['POST'])
 def post_data():
     try:
         logging.info("Trying to open a file")
@@ -44,6 +65,7 @@ def post_data():
 
 
 @flask_app.route('/get', methods=['GET'])
+@swag_from('swagger_config.yml', methods=['GET'])
 def get_data():
     try:
         with open("data_file.json", 'r') as r:

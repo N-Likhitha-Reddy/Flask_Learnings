@@ -1,0 +1,40 @@
+swagger: '2.0'
+info:
+  title: Flask API
+  description: API for file processing
+  version: 1.0.0
+basePath: /
+schemes:
+  - http
+paths:
+  /:
+    get:
+      tags:
+        - Root
+      summary: Index endpoint
+      description: Returns server running status
+      responses:
+        200:
+          description: Server is running
+  /post:
+    post:
+      tags:
+        - Data
+      summary: Add data to the file
+      description: Add data to the data_file.json
+      responses:
+        200:
+          description: Data added successfully
+  /get:
+    get:
+      tags:
+        - Data
+      summary: Get data from the file
+      description: Retrieve data from data_file.json
+      responses:
+        200:
+          description: Data successfully received
+          schema:
+            type: object
+        404:
+          description: No data present in the file
