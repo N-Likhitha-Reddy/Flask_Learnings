@@ -29,6 +29,24 @@ class FileProcessingError(Exception):
     pass
 
 
+def log_request_response(app):
+    @app.before_request
+    def log_request():
+        app.logger.info(f"Request: {request.method} {request.url}")
+        app.logger.info(f"Headers: {request.headers}")
+        app.logger.info(f"Body: {request.get_data()}")
+
+    @app.after_request
+    def log_response(response):
+        app.logger.info(f"Response status: {response.status}")
+        app.logger.info(f"Response headers: {response.headers}")
+        app.logger.info(f"Response body: {response.get_data(as_text=True)}")
+        return response
+
+
+log_request_response(flask_app)
+
+
 @flask_app.route('/')
 @swag_from('swagger_config.yml', methods=['GET'])
 def index():
