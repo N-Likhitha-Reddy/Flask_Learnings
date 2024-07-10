@@ -3,9 +3,11 @@ import json
 import logging
 from flasgger import Swagger
 from flasgger.utils import swag_from
+from flask import session
 
 
 flask_app = Flask(__name__)
+flask_app.secret_key = b'secret-key'
 logging.basicConfig(level=logging.INFO, format='%(asctime)s %(levelname)s: %(message)s [in %(pathname)s:%(lineno)d]')
 
 
@@ -29,29 +31,15 @@ class FileProcessingError(Exception):
     pass
 
 
-def log_request_response(app):
-    @app.before_request
-    def log_request():
-        app.logger.info(f"Request: {request.method} {request.url}")
-        app.logger.info(f"Headers: {request.headers}")
-        app.logger.info(f"Body: {request.get_data()}")
-
-    @app.after_request
-    def log_response(response):
-        app.logger.info(f"Response status: {response.status}")
-        app.logger.info(f"Response headers: {response.headers}")
-        app.logger.info(f"Response body: {response.get_data(as_text=True)}")
-        return response
-
-
-log_request_response(flask_app)
-
-
 @flask_app.route('/')
 @swag_from('swagger_config.yml', methods=['GET'])
 def index():
-    flask_app.logger.info("Index end point is reached")
-    return 'Server is running'
+    flask_app.logger.info("Checking the count of webpage accessing")
+    if 'count' in session:
+        session['count'] += 1
+    else:
+        session['count'] = 1
+    return f"Count: {session['count']}"
 
 
 @flask_app.route('/post', methods=['POST'])
