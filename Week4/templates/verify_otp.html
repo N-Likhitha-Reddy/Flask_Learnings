@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Verify OTP</title>
+  </head>
+  <body>
+    <h1>Verify OTP</h1>
+    <form method="POST">
+      {{ form.hidden_tag() }}
+      <p>
+        {{ form.otp.label }}<br>
+        {{ form.otp(size=32) }}<br>
+      </p>
+      <p>{{ form.submit() }}</p>
+    </form>
+  </body>
+</html>

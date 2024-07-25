@@ -6,30 +6,13 @@ import smtplib
 import os
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
-from flasgger import Swagger
-from flasgger.utils import swag_from
 from forms import DataForm, EmailForm, OTPForm
+from dotenv import load_dotenv
 
+load_dotenv()
 
 flask_app = Flask(__name__)
-flask_app.secret_key = b'secret-key'
-logging.basicConfig(level=logging.INFO, format='%(asctime)s %(levelname)s: %(message)s [in %(pathname)s:%(lineno)d]')
-
-
-swagger = Swagger(flask_app, config={
-    "headers": [],
-    "specs": [
-        {
-            "endpoint": 'apispec_1',
-            "route": '/apispec_1.json',
-            "rule_filter": lambda rule: True,
-            "model_filter": lambda tag: True,
-        }
-    ],
-    "static_url_path": "/flasgger_static",
-    "swagger_ui": True,
-    "specs_route": "/swagger/"
-})
+flask_app.secret_key = os.getenv('FLASK_SECRET_KEY', 'default-secret-key')
 
 
 class FileProcessingError(Exception):
@@ -59,11 +42,10 @@ def form():
 
 # Email
 def send_otp_email(recipient_email, otp):
-    print("**** SENDING MAIL ****")
     smtp_server = os.getenv('SMTP_SERVER', 'smtp.gmail.com')
     smtp_port = int(os.getenv('SMTP_PORT', 587))
-    email_user = os.getenv('EMAIL_USER', 'defaultmail@gmail.com')
-    email_password = os.getenv('EMAIL_PASSWORD', 'default_password')
+    email_user = os.getenv('EMAIL_USER')
+    email_password = os.getenv('EMAIL_PASSWORD')
 
     msg = MIMEMultipart()
     msg['From'] = email_user
@@ -80,14 +62,25 @@ def send_otp_email(recipient_email, otp):
         text = msg.as_string()
         server.sendmail(email_user, recipient_email, text)
         server.quit()
+        flask_app.logger.info(f"OTP sent successfully to {recipient_email}")
+    except smtplib.SMTPAuthenticationError as e:
+        flask_app.logger.error(f"SMTP Authentication Error: {e}")
+        flash("Error sending email. Please check your email credentials.")
+    except smtplib.SMTPException as e:
+        flask_app.logger.error(f"SMTP Error: {e}")
+        flash("An error occurred while sending the email. Please try again later.")
     except Exception as e:
-        flask_app.logger.error(f"Error sending email: {e}")
+        flask_app.logger.error(f"Unexpected error: {e}")
+        flash("An unexpected error occurred. Please try again later.")
 
 
 def generate_and_store_otp(email):
     otp = random.randint(100000, 999999)
-    with open('otp_data.json', 'r') as file:
-        otp_data = json.load(file)
+    try:
+        with open('otp_data.json', 'r') as file:
+            otp_data = json.load(file)
+    except FileNotFoundError:
+        otp_data = {}
     otp_data[email] = otp
     with open('otp_data.json', 'w') as file:
         json.dump(otp_data, file)
@@ -125,7 +118,6 @@ def verify_otp():
 
 # default page
 @flask_app.route('/')
-@swag_from('swagger_config.yml', methods=['GET'])
 def index():
     flask_app.logger.info("Checking the count of webpage accessing")
     if 'count' in session:
@@ -136,7 +128,6 @@ def index():
 
 
 @flask_app.route('/post', methods=['POST'])
-@swag_from('swagger_config.yml', methods=['POST'])
 def post_data():
     try:
         logging.info("Trying to open a file")
@@ -164,7 +155,6 @@ def post_data():
 
 
 @flask_app.route('/get', methods=['GET'])
-@swag_from('swagger_config.yml', methods=['GET'])
 def get_data():
     try:
         with open("data_file.json", 'r') as r:
