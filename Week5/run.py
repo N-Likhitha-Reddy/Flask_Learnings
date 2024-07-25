@@ -15,14 +15,14 @@ from forms import DataForm, EmailForm, OTPForm
 flask_app = Flask(__name__)
 flask_app.secret_key = b'secret-key'
 
-# Setup JWT
+
 flask_app.config['JWT_SECRET_KEY'] = 'your_jwt_secret_key'  # Change this to a random secret key
 jwt = JWTManager(flask_app)
 
-# Setup CORS
+
 CORS(flask_app)
 
-# Setup CSRF
+
 csrf = CSRFProtect(flask_app)
 
 
