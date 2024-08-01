@@ -1,15 +1,20 @@
-from flask import Flask, request, jsonify
+from flask import Blueprint, jsonify, request, session, current_app as flask_app
 import json
 
-flask_app = Flask(__name__)
+basic_api_blueprint = Blueprint('basic_api_blueprint', __name__)
 
 
-@flask_app.route('/')
+@basic_api_blueprint.route('/')
 def index():
-    return 'Server is running'
+    flask_app.logger.info("Checking the count of webpage accessing")
+    if 'count' in session:
+        session['count'] += 1
+    else:
+        session['count'] = 1
+    return f"Number of times page opened is: {session['count']}"
 
 
-@flask_app.route('/post', methods=['POST'])
+@basic_api_blueprint.route('/post', methods=['POST'])
 def post_data():
     try:
         with open("data_file.json", 'r') as r:
@@ -27,24 +32,19 @@ def post_data():
             data['Likhitha'] = 'Python'
         with open("data_file.json", 'w') as w:
             w.write(json.dumps(data))
-    return "data added successfully"
+    return "Data added successfully"
 
 
-@flask_app.route('/get', methods=['GET'])
+@basic_api_blueprint.route('/get', methods=['GET'])
 def get_data():
     try:
         with open("data_file.json", 'r') as r:
             content = r.read()
     except FileNotFoundError as ex:
-        flask_app.logger.error("FileNotFoundError: data_file.json file not found")
         return "No data present in the file"
     if content:
         data = json.loads(content)
         flask_app.logger.info("Data successfully received")
         return data
     else:
-        return "no data present in the file"
-
-
-if __name__ == '__main__':
-    flask_app.run(debug=True)
+        return "No data present in the file"
