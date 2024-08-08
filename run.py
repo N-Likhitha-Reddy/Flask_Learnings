@@ -11,18 +11,14 @@ from api.basic_get_and_post_apis import basic_api_blueprint as basic_get_post_bl
 
 load_dotenv()
 
-
 flask_app = Flask(__name__)
 flask_app.secret_key = b'secret-key'
-
 
 flask_app.config['JWT_SECRET_KEY'] = 'your_jwt_secret_key'
 jwt = JWTManager(flask_app)
 
-
 CORS(flask_app)
 csrf = CSRFProtect(flask_app)
-
 
 flask_app.register_blueprint(basic_get_post_blueprint, url_prefix='/api')
 flask_app.register_blueprint(auth_blueprint, url_prefix='/auth')
@@ -51,4 +47,4 @@ if __name__ == '__main__':
     except FileNotFoundError:
         with open('otp_data.json', 'w') as file:
             json.dump({}, file)
-    flask_app.run(debug=True)
+    # flask_app.run(debug=True)
